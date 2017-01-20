@@ -1,4 +1,4 @@
-var input = '{}'
+var input = '{"name":{"main":"aish","age":24,"Siblings":["Deep","Iti"]}'
 
 function nullParser (input) {
   if (input.slice(0, 4) === 'null') {
@@ -6,11 +6,11 @@ function nullParser (input) {
   } return null
 }
 
-function BoolParser (input) {
+function boolParser (input) {
   if (input.slice(0, 4) === 'true') {
     return [true, input.slice(4)]
-  } else if (input.slice(0, 4) === 'false') {
-    return [false, input.slice(4)]
+  } else if (input.slice(0, 5) === 'false') {
+    return [false, input.slice(5)]
   }
   return null
 }
@@ -66,53 +66,77 @@ function arrayParser (input) {
   }
   input = input.slice(1)
   while (true) {
-    let result = spaceParser(input)
-     if (result === null) break
-     s.push(result[0])
-     input = result[1]
-     result = commaParser(input)
-     if (result === null) break
-     input = result[1]
-     if(input.startsWith(']')){
-       return null
-     }
-}
-
-  if(input.startsWith(']')){
+    let result = arrayParser(input)
+    if (result === null) {
+      if (numParser(input) !== null) {
+        result = numParser(input)
+      } else if (stringParser(input) !== null) {
+        result = stringParser(input)
+      } else if (boolParser(input) !== null) {
+        result = boolParser(input)
+      } else break
+    }
+    s.push(result[0])
+    input = result[1]
+    result = commaParser(input)
+    if (result === null) break
+    input = result[1]
+    if (input.startsWith(']')) {
+      return null
+    }
+  }
+  if (input.startsWith(']')) {
     return [s, input.slice(1)]
   }
   return null
 }
 
- function objectParser (input) {
-   let obj  = {}
-   if(!input.startsWith('{')){
+function objectParser (input) {
+  let obj = {}
+  let key = ''
+  let value = ''
+  if (!input.startsWith('{')) {
     return null
   }
   input = input.slice(1)
   while (true) {
-    result = stringParser(input)
-    if(result === null) break
+    let result = stringParser(input)
+    if (result === null) break
+    else {
+      key = result[0]
+      input = result[1]
+      result = colonParser(input)
+      if (result === null) return null
+      input = result[1]
+      result = objectParser(input)
+      if (result === null) {
+        if (numParser(input) !== null) {
+          result = numParser(input)
+        } else if (stringParser(input) !== null) {
+          result = stringParser(input)
+        } else if (boolParser(input) !== null) {
+          result = boolParser(input)
+        } else if (arrayParser(input) !== null) {
+          result = arrayParser(input)
+        } else break
+      }
+      value = result[0]
+      input = result[1]
+      obj[key] = value
+      input = result[1]
+      result = commaParser(input)
+      if (result === null) break
+      input = result[1]
+      if (input.startsWith('}')) {
+        return null
+      }
+    }
   }
-  if (input.startsWith('}'))
-  return [obj , input.slice(1)]
-//   if(spaceParser(input)){
-//     intput = spaceParser(input)[1]
-//   }
-//   console.log()
+  if (input.startsWith('}')) {
+    return [obj, input.slice(1)]
+  }
+  return null
 }
 
-function elementParser (input) {
-  result = nullParser(input)
-  boolParser(input)
-  commaParser(input)
-  colonParser(input)
-  spaceParser(input)
-  stringParser(input)
-  numParser(input)
-}
-
-// function ParserFactory (input) {}
 let output = objectParser(input)
-// objectParser(input)
 console.log(output)
