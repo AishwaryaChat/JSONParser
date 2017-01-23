@@ -1,4 +1,4 @@
-var input = '{"name":{"main":"aish","age":24,"Siblings":["Deep","Iti"]}'
+var input = '{"glossary": {   "title"   : "example glossary","GlossDiv": {"title": "S","GlossList": {"GlossEntry": {"ID": "SGML","SortAs": "SGML","GlossTerm": "Standard Generalized Markup Language","Acronym": "SGML","Abbrev": "ISO 8879:1986","GlossDef": {"para": "A meta-markup language, used to create markup languages such as DocBook.","GlossSeeAlso": ["GML", "XML"]},"GlossSee": "markup"}}}}}'
 
 function nullParser (input) {
   if (input.slice(0, 4) === 'null') {
@@ -30,9 +30,9 @@ function colonParser (input) {
 }
 
 function spaceParser (input) {
-  let regexp = input.match(/^[\s\n]/)
   if (!input.match(/^[\s\n]/)) return null
-  return ['', input.slice(regexp[0].length)]
+  let regexp = input.slice(input.match(/\S/).index)
+  return [null, regexp]
 }
 
 function stringParser (input) {
@@ -65,19 +65,19 @@ function arrayParser (input) {
     return null
   }
   input = input.slice(1)
+  let space = spaceParser(input)
+  if (space !== null) {
+    input = space[1]
+  }
   while (true) {
-    let result = arrayParser(input)
-    if (result === null) {
-      if (numParser(input) !== null) {
-        result = numParser(input)
-      } else if (stringParser(input) !== null) {
-        result = stringParser(input)
-      } else if (boolParser(input) !== null) {
-        result = boolParser(input)
-      } else break
-    }
+    let result = valueParser(input)
+    if (result === null) return null
     s.push(result[0])
     input = result[1]
+    space = spaceParser(input)
+    if (space !== null) {
+      input = space[1]
+    }
     result = commaParser(input)
     if (result === null) break
     input = result[1]
@@ -99,27 +99,30 @@ function objectParser (input) {
     return null
   }
   input = input.slice(1)
+  let space = spaceParser(input)
+  if (space !== null) {
+    input = space[1]
+    console.log(input)
+  }
   while (true) {
     let result = stringParser(input)
     if (result === null) break
     else {
       key = result[0]
       input = result[1]
+      space = spaceParser(input)
+      if (space !== null) {
+        input = space[1]
+      }
       result = colonParser(input)
       if (result === null) return null
       input = result[1]
-      result = objectParser(input)
-      if (result === null) {
-        if (numParser(input) !== null) {
-          result = numParser(input)
-        } else if (stringParser(input) !== null) {
-          result = stringParser(input)
-        } else if (boolParser(input) !== null) {
-          result = boolParser(input)
-        } else if (arrayParser(input) !== null) {
-          result = arrayParser(input)
-        } else break
+      space = spaceParser(input)
+      if (space !== null) {
+        input = space[1]
       }
+      result = valueParser(input)
+      if (result === null) return null
       value = result[0]
       input = result[1]
       obj[key] = value
@@ -133,10 +136,35 @@ function objectParser (input) {
     }
   }
   if (input.startsWith('}')) {
+    // console.log(obj)
     return [obj, input.slice(1)]
   }
   return null
 }
 
-let output = objectParser(input)
+function valueParser (input) {
+  let result = input
+  while (result !== null) {
+    if (arrayParser(input) !== null) {
+      result = arrayParser(input)
+      input = result[1]
+    } else if (objectParser(input) !== null) {
+      result = objectParser(input)
+      input = result[1]
+    } else if (numParser(input) !== null) {
+      result = numParser(input)
+      input = result[1]
+    } else if (stringParser(input) !== null) {
+      result = stringParser(input)
+      input = result[1]
+    } else if (boolParser(input) !== null) {
+      result = boolParser(input)
+    } else if (nullParser(input) !== null) {
+      result = nullParser(input)
+      input = result[1]
+    } else return result
+  }
+}
+
+let output = valueParser(input)
 console.log(output)
