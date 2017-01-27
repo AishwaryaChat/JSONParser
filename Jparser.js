@@ -1,4 +1,3 @@
-var input = '{"glossary":         {"title"   : "example glossary"         ,"GlossDiv": {"title": "S","GlossList": {"GlossEntry": {"ID": "SGML","SortAs": "SGML","GlossTerm": "Standard Generalized Markup Language","Acronym": "SGML","Abbrev": "ISO 8879:1986","GlossDef": {"para": "A meta-markup language, used to create markup languages such as DocBook.","GlossSeeAlso": ["GML", "XML"]},"GlossSee": "markup"}}}}}'
 const nullParser = input => input.startsWith('null') ? [null, input.slice(4)] : null
 const boolParser = input => input.startsWith('true') ? ['true', input.slice(4)] : (input.startsWith('false') ? ['false', input.slice(5)] : null)
 const commaParser = input => input.startsWith(',') ? [',', input.slice(1)] : null
@@ -108,7 +107,7 @@ function valueParser (input) {
   result = objectParser(input) || arrayParser(input) || stringParser(input) || numParser(input) || nullParser(input) || boolParser(input)
   return result
 }
-
+let input = require('fs').readFileSync('example.txt').toString()
 let output = valueParser(input)
 if (output === null) output = 'Invalid JSON'
 else {
